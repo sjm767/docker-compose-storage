@@ -1,0 +1,56 @@
+version: '2.2'
+
+networks:
+  somenetwork:
+
+services:
+  fluentd:
+    container_name: fluentd
+    image: jaeshim-fluentd
+    environment:
+      - FLUENTD_CONF=fluentd_mysql_stdout.conf
+    ports:
+      - 9880:9880
+    volumes:
+      - ./:/fluentd/etc
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_USER: jaeshim
+      MYSQL_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: jaeshim
+      TZ: Asia/Seoul
+  elasticsearch:
+    container_name: elasticsearch
+    image: elasticsearch:7.17.7
+    ports:
+     - 9200:9200
+     - 9300:9300
+    networks:
+     - default
+    environment:
+     - discovery.type=single-node
+     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+     - TZ=Asia/Seoul
+     - node.name=single-node
+     - cluster.name=es-singlenode-c
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:7.17.7
+    environment:
+      SERVER_NAME: kibana
+      # Elasticsearch 기본 호스트는 http://elasticsearch:9200 이다. 현재 docker-compose 파일에 Elasticsearch 서비스 명은 es01로 설정되어있다.
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - 5601:5601
+    # Elasticsearch Start Dependency
+    depends_on:
+      - elasticsearch
+
+
+ 
